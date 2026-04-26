@@ -5,7 +5,11 @@ import { EmailForwardingStack } from '../lib/email-forwarding-stack';
 const TEST_ACCOUNT = '123456789012';
 const TEST_REGION = 'eu-west-1';
 const TEST_DOMAIN = 'example.com';
-const TEST_FORWARD_TO = 'destination@example.com';
+const TEST_ROUTES = {
+  info: 'destination@example.com',
+  support: ['a@example.com', 'b@example.com'],
+  '*': 'fallback@example.com',
+};
 
 const synthesizeStack = (): Template => {
   const app = new App({
@@ -19,7 +23,7 @@ const synthesizeStack = (): Template => {
   const stack = new EmailForwardingStack(app, 'TestStack', {
     env: { account: TEST_ACCOUNT, region: TEST_REGION },
     domain: TEST_DOMAIN,
-    forwardTo: TEST_FORWARD_TO,
+    routes: TEST_ROUTES,
   });
   return Template.fromStack(stack);
 };
@@ -115,11 +119,11 @@ describe('EmailForwardingStack', () => {
       });
     });
 
-    it('sets FORWARD_TO_EMAIL and FORWARD_FROM_ADDRESS env vars on the Lambda', () => {
+    it('sets FORWARD_ROUTES and FORWARD_FROM_ADDRESS env vars on the Lambda', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
         Environment: {
           Variables: Match.objectLike({
-            FORWARD_TO_EMAIL: TEST_FORWARD_TO,
+            FORWARD_ROUTES: JSON.stringify(TEST_ROUTES),
             FORWARD_FROM_ADDRESS: `noreply@${TEST_DOMAIN}`,
           }),
         },

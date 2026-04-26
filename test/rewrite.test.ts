@@ -99,6 +99,29 @@ describe('rebuildEmail', () => {
       const toObject = Array.isArray(reparsed.to) ? reparsed.to[0] : reparsed.to;
       expect(toObject?.value[0].address).toBe(FORWARD_TO);
     });
+
+    it('accepts forwardTo as an array and sets multiple To recipients', async () => {
+      const eml = [
+        'From: "Alice Example" <alice@external.com>',
+        'To: info@mybusiness.com',
+        'Subject: Multi recipient test',
+        'Content-Type: text/plain; charset=utf-8',
+        '',
+        'Body.',
+      ].join('\r\n');
+      const parsed = await parseEml(eml);
+
+      const rebuilt = await rebuildEmail({
+        parsed,
+        fromAddress: FROM_ADDRESS,
+        forwardTo: ['a@example.com', 'b@example.com'],
+      });
+      const reparsed = await parseEml(rebuilt);
+
+      const toObject = Array.isArray(reparsed.to) ? reparsed.to[0] : reparsed.to;
+      expect(toObject?.value).toHaveLength(2);
+      expect(toObject?.value.map((v) => v.address)).toEqual(['a@example.com', 'b@example.com']);
+    });
   });
 
   describe('Subject preservation', () => {
