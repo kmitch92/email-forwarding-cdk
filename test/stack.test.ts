@@ -5,12 +5,11 @@ import { EmailForwardingStack } from '../lib/email-forwarding-stack';
 const TEST_ACCOUNT = '123456789012';
 const TEST_REGION = 'eu-west-1';
 const TEST_DOMAIN = 'example.com';
+const TEST_FORWARD_TO = 'destination@example.com';
 
 const synthesizeStack = (): Template => {
   const app = new App({
     context: {
-      [`ssm:account=${TEST_ACCOUNT}:parameterName=/email-forwarding/domain:region=${TEST_REGION}`]:
-        TEST_DOMAIN,
       [`hosted-zone:account=${TEST_ACCOUNT}:domainName=${TEST_DOMAIN}:region=${TEST_REGION}`]: {
         Id: '/hostedzone/Z123EXAMPLE',
         Name: `${TEST_DOMAIN}.`,
@@ -19,6 +18,8 @@ const synthesizeStack = (): Template => {
   });
   const stack = new EmailForwardingStack(app, 'TestStack', {
     env: { account: TEST_ACCOUNT, region: TEST_REGION },
+    domain: TEST_DOMAIN,
+    forwardTo: TEST_FORWARD_TO,
   });
   return Template.fromStack(stack);
 };
@@ -113,6 +114,17 @@ describe('EmailForwardingStack', () => {
         Protocol: 'lambda',
       });
     });
+
+    it('sets FORWARD_TO_EMAIL and FORWARD_FROM_ADDRESS env vars on the Lambda', () => {
+      template.hasResourceProperties('AWS::Lambda::Function', {
+        Environment: {
+          Variables: Match.objectLike({
+            FORWARD_TO_EMAIL: TEST_FORWARD_TO,
+            FORWARD_FROM_ADDRESS: `noreply@${TEST_DOMAIN}`,
+          }),
+        },
+      });
+    });
   });
 
   describe('SES receipt rule', () => {
@@ -150,19 +162,6 @@ describe('EmailForwardingStack', () => {
           Statement: Match.arrayWith([
             Match.objectLike({
               Action: Match.arrayWith([Match.stringLikeRegexp('s3:GetObject')]),
-              Effect: 'Allow',
-            }),
-          ]),
-        },
-      });
-    });
-
-    it('grants the Lambda role ssm:GetParameters* on the forwarding parameter', () => {
-      template.hasResourceProperties('AWS::IAM::Policy', {
-        PolicyDocument: {
-          Statement: Match.arrayWith([
-            Match.objectLike({
-              Action: Match.arrayWith([Match.stringLikeRegexp('ssm:GetParameter')]),
               Effect: 'Allow',
             }),
           ]),
