@@ -1,4 +1,8 @@
 {
   "domain": "yourbusiness.com",
-  "forwardTo": "you@gmail.com"
+  "routes": {
+    "info": "you+info@gmail.com",
+    "support": ["alice@gmail.com", "bob@gmail.com"],
+    "*": "you+catchall@gmail.com"
+  }
 }

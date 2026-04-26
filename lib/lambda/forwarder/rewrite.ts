@@ -5,7 +5,7 @@ import { Attachment as MailAttachment } from 'nodemailer/lib/mailer';
 export interface RebuildArgs {
   parsed: ParsedMail;
   fromAddress: string;
-  forwardTo: string;
+  forwardTo: string | string[];
 }
 
 interface OriginalSender {

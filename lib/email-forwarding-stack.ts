@@ -11,10 +11,11 @@ import * as actions from 'aws-cdk-lib/aws-ses-actions';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as cr from 'aws-cdk-lib/custom-resources';
+import { Routes } from './lambda/forwarder/routing';
 
 export interface EmailForwardingStackProps extends cdk.StackProps {
   domain: string;
-  forwardTo: string;
+  routes: Routes;
 }
 
 export class EmailForwardingStack extends cdk.Stack {
@@ -68,7 +69,7 @@ export class EmailForwardingStack extends cdk.Stack {
         minify: true,
       },
       environment: {
-        FORWARD_TO_EMAIL: props.forwardTo,
+        FORWARD_ROUTES: JSON.stringify(props.routes),
         FORWARD_FROM_ADDRESS: `noreply@${props.domain}`,
       },
     });
