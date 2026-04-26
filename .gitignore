@@ -19,3 +19,6 @@ cdk.out
 
 # Coverage
 coverage/
+
+# Local config (contains domain + forwarding email — gitignored because repo is public)
+local.config.json
