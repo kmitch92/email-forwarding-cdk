@@ -1,0 +1,21 @@
+# Dependencies
+node_modules
+
+# Compiled JavaScript output (in bin/ and lib/ only — keep test/*.js excluded too)
+bin/*.js
+lib/**/*.js
+test/**/*.js
+*.d.ts
+
+# CDK
+cdk.out
+.cdk.staging
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment
+.env
+
+# Coverage
+coverage/
