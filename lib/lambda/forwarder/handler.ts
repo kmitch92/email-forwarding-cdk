@@ -3,7 +3,6 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { simpleParser } from 'mailparser';
 import { rebuildEmail } from './rewrite';
-import { getForwardTo } from './ssm-cache';
 
 const s3 = new S3Client({});
 const ses = new SESClient({});
@@ -15,7 +14,7 @@ interface SesReceiveNotification {
 }
 
 export const handler = async (event: SNSEvent): Promise<void> => {
-  const forwardTo = await getForwardTo();
+  const forwardTo = requireEnv('FORWARD_TO_EMAIL');
   const fromAddress = requireEnv('FORWARD_FROM_ADDRESS');
 
   for (const record of event.Records) {

@@ -10,15 +10,19 @@ import * as ses from 'aws-cdk-lib/aws-ses';
 import * as actions from 'aws-cdk-lib/aws-ses-actions';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as cr from 'aws-cdk-lib/custom-resources';
 
+export interface EmailForwardingStackProps extends cdk.StackProps {
+  domain: string;
+  forwardTo: string;
+}
+
 export class EmailForwardingStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: EmailForwardingStackProps) {
     super(scope, id, props);
 
-    // 1. Synth-time SSM lookup for the domain
-    const domain = ssm.StringParameter.valueFromLookup(this, '/email-forwarding/domain');
+    // 1. Domain provided via stack props (loaded from gitignored local.config.json)
+    const domain = props.domain;
 
     // 2. HostedZone lookup
     const hostedZone = route53.HostedZone.fromLookup(this, 'Zone', { domainName: domain });
@@ -53,13 +57,6 @@ export class EmailForwardingStack extends cdk.Stack {
     // 8. SNS topic
     const topic = new sns.Topic(this, 'InboundNotifications');
 
-    // 9. SSM parameter reference (for forwarding address)
-    const forwardingParam = ssm.StringParameter.fromStringParameterName(
-      this,
-      'ForwardingParam',
-      '/email-forwarding/forward-to',
-    );
-
     // 10. NodejsFunction
     const fn = new nodejs.NodejsFunction(this, 'EmailForwarder', {
       entry: path.join(__dirname, 'lambda/forwarder/handler.ts'),
@@ -71,14 +68,13 @@ export class EmailForwardingStack extends cdk.Stack {
         minify: true,
       },
       environment: {
-        FORWARDING_SSM_PARAM: forwardingParam.parameterName,
-        FORWARD_FROM_ADDRESS: `noreply@${domain}`,
+        FORWARD_TO_EMAIL: props.forwardTo,
+        FORWARD_FROM_ADDRESS: `noreply@${props.domain}`,
       },
     });
 
     // 11. IAM grants on the Lambda role
     bucket.grantRead(fn);
-    forwardingParam.grantRead(fn);
     fn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['ses:SendRawEmail'],
