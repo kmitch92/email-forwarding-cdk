@@ -65,7 +65,7 @@ export class EmailForwardingStack extends cdk.Stack {
       memorySize: 256,
       timeout: cdk.Duration.seconds(30),
       bundling: {
-        nodeModules: ['mailparser', 'nodemailer'],
+        nodeModules: ['mailparser', 'nodemailer', '@aws-lambda-powertools/logger'],
         minify: true,
       },
       environment: {
@@ -74,6 +74,8 @@ export class EmailForwardingStack extends cdk.Stack {
         BUCKET_NAME: bucket.bucketName,
         // OBJECT_KEY_PREFIX must match the objectKeyPrefix passed to actions.S3 below.
         OBJECT_KEY_PREFIX: 'inbound/',
+        LOG_LEVEL: 'INFO',
+        POWERTOOLS_SERVICE_NAME: 'email-forwarder',
       },
     });
 
