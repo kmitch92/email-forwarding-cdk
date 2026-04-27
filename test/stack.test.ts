@@ -119,12 +119,14 @@ describe('EmailForwardingStack', () => {
       });
     });
 
-    it('sets FORWARD_ROUTES and FORWARD_FROM_ADDRESS env vars on the Lambda', () => {
+    it('sets FORWARD_ROUTES, FORWARD_FROM_ADDRESS, BUCKET_NAME and OBJECT_KEY_PREFIX env vars on the Lambda', () => {
       template.hasResourceProperties('AWS::Lambda::Function', {
         Environment: {
           Variables: Match.objectLike({
             FORWARD_ROUTES: JSON.stringify(TEST_ROUTES),
             FORWARD_FROM_ADDRESS: `noreply@${TEST_DOMAIN}`,
+            BUCKET_NAME: Match.anyValue(),
+            OBJECT_KEY_PREFIX: 'inbound/',
           }),
         },
       });
