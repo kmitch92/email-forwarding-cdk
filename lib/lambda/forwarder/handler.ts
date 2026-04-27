@@ -9,8 +9,13 @@ const s3 = new S3Client({});
 const ses = new SESClient({});
 
 interface SesReceiveNotification {
-  mail: { destination: string[] };
-  receipt: { action: { type: 'S3'; bucketName: string; objectKey: string } };
+  mail: {
+    messageId: string;
+    destination: string[];
+  };
+  receipt: {
+    action: { type: string };
+  };
 }
 
 const routes: Routes = (() => {
@@ -22,6 +27,8 @@ const routes: Routes = (() => {
   }
 })();
 const fromAddress = requireEnv('FORWARD_FROM_ADDRESS');
+const bucketName = requireEnv('BUCKET_NAME');
+const objectKeyPrefix = process.env.OBJECT_KEY_PREFIX ?? '';
 const atIndex = fromAddress.lastIndexOf('@');
 if (atIndex < 1) throw new Error(`FORWARD_FROM_ADDRESS must be a valid email address: ${fromAddress}`);
 const domain = fromAddress.slice(atIndex + 1);
@@ -39,7 +46,7 @@ export const handler = async (event: SNSEvent): Promise<void> => {
       continue;
     }
 
-    const { bucketName, objectKey } = notification.receipt.action;
+    const objectKey = `${objectKeyPrefix}${notification.mail.messageId}`;
     const obj = await s3.send(new GetObjectCommand({ Bucket: bucketName, Key: objectKey }));
     if (!obj.Body) throw new Error(`S3 object ${objectKey} has empty body`);
     const raw = Buffer.from(await obj.Body.transformToByteArray());

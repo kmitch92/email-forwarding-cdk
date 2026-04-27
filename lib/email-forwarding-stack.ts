@@ -71,6 +71,9 @@ export class EmailForwardingStack extends cdk.Stack {
       environment: {
         FORWARD_ROUTES: JSON.stringify(props.routes),
         FORWARD_FROM_ADDRESS: `noreply@${props.domain}`,
+        BUCKET_NAME: bucket.bucketName,
+        // OBJECT_KEY_PREFIX must match the objectKeyPrefix passed to actions.S3 below.
+        OBJECT_KEY_PREFIX: 'inbound/',
       },
     });
 
